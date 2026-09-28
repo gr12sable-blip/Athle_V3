@@ -10,6 +10,7 @@ import {
   deleteDoc,
   deleteField,
 } from "firebase/firestore";
+import { getMessaging, getToken } from "firebase/messaging";
 import {
   Trash2,
   LogOut,
@@ -78,6 +79,7 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
+const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -179,6 +181,33 @@ export default function App() {
     }
   }, [editingStatus, globalStatuses, currentUserProfile]);
 
+  // ==========================================
+  // NOTIFICATIONS PUSH
+  // ==========================================
+  useEffect(() => {
+    if (!currentUserProfile) return;
+    if (!("Notification" in window)) return;
+
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        try {
+          const messaging = getMessaging(app);
+          getToken(messaging, { vapidKey: VAPID_KEY }).then((token) => {
+            if (token) {
+              setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "tokens", currentUserProfile.id), {
+                token,
+                name: currentUserProfile.name,
+                updatedAt: Date.now(),
+              });
+            }
+          }).catch((err) => console.log("Erreur token FCM:", err));
+        } catch (err) {
+          console.log("Messaging non disponible:", err);
+        }
+      }
+    });
+  }, [currentUserProfile?.id]);
+
   const saveProfile = (athlete) => {
     setCurrentUserProfile(athlete);
     localStorage.setItem("sgs_user_profile", JSON.stringify(athlete));
@@ -204,7 +233,7 @@ export default function App() {
       const id = `sess_${date.replace(/[^0-9]/g, "")}_${Date.now()}_${i}`;
       await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "sessions", id), {
         date,
-        time: time || "19:00",
+        time: time || "18:30",
         type: type || "Entraînement",
         location: location || "Stade",
         description: desc || "",
@@ -532,11 +561,12 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   else if (isEvent) cardStyle = "bg-purple-50 border-purple-500 ring-4 ring-purple-100/50";
   else if (myStatus === "present") cardStyle = "bg-white border-green-500 ring-4 ring-green-50";
   else if (myStatus === "absent") cardStyle = "bg-white border-red-500 ring-4 ring-red-50";
+  else if (myStatus === "dejaFait") cardStyle = "bg-white border-violet-500 ring-4 ring-violet-50";
 
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://TON-APP.web.app"; // ← remplace par ton URL Firebase
+  const APP_URL = "https://athle-v3.vercel.app/"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
     const presentNames = attendants.map((a) => a.name).join(", ") || "\u2014";
@@ -544,14 +574,14 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
     const noReplyNames = noReply.map((a) => a.name).join(", ")    || "\u2014";
 
     const e = {
-      run:      "\uD83C\uDFC3",
-      clock:    "\uD83D\uDD61",
-      pin:      "\uD83D\uDCCD",
-      muscle:   "\uD83D\uDCAA",
-      check:    "\u2705",
-      cross:    "\u274C",
-      question: "\u2753",
-      point:    "\uD83D\uDC49",
+      run:      "\u{1F3C3}",
+      clock:    "\u{1F561}",
+      pin:      "\u{1F4CD}",
+      muscle:   "\u{1F4AA}",
+      check:    "\u{2705}",
+      cross:    "\u{274C}",
+      question: "\u{2753}",
+      point:    "\u{1F449}",
     };
 
     const text =
@@ -601,14 +631,9 @@ ${e.point} R\u00E9pondez ici : ${APP_URL}`;
               <span className="text-red-500 flex items-center gap-1"><XCircle size={10} /> {absentees.length} Absents</span>
               {dejaFait.length > 0 && <span className="text-violet-500 flex items-center gap-1"><CheckCheck size={10} /> {dejaFait.length} Déjà fait</span>}
             </div>
-            {/* BOUTON WHATSAPP */}
             {!isCancelled && (
-              <button
-                onClick={shareOnWhatsApp}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] text-white rounded-xl text-[9px] font-black uppercase tracking-wide shadow-sm active:scale-95 transition-transform"
-              >
-                <Share2 size={11} />
-                WhatsApp
+              <button onClick={shareOnWhatsApp} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] text-white rounded-xl text-[9px] font-black uppercase tracking-wide shadow-sm active:scale-95 transition-transform">
+                <Share2 size={11} /> WhatsApp
               </button>
             )}
           </div>
