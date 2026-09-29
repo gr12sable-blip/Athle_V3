@@ -10,7 +10,7 @@ import {
   deleteDoc,
   deleteField,
 } from "firebase/firestore";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken } from "firebase/messaging";
 import {
   Trash2,
   LogOut,
@@ -213,15 +213,6 @@ export default function App() {
             }
           }).catch((err) => console.log("Erreur token FCM:", err));
 
-          // Notif quand l'app est au premier plan
-          onMessage(messaging, (payload) => {
-            if (Notification.permission === "granted") {
-              new Notification(payload.notification.title, {
-                body: payload.notification.body,
-                icon: '/icon-192.png'
-              });
-            }
-          });
         } catch (err) {
           console.log("Messaging non disponible:", err);
         }
