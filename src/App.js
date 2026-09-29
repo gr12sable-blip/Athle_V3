@@ -245,7 +245,7 @@ export default function App() {
       const id = `sess_${date.replace(/[^0-9]/g, "")}_${Date.now()}_${i}`;
       await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "sessions", id), {
         date,
-        time: time || "18:30",
+        time: time || "19:00",
         type: type || "Entraînement",
         location: location || "Stade",
         description: desc || "",
