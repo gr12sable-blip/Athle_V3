@@ -116,7 +116,7 @@ export default function App() {
     text: "",
   });
 
-  const APP_VERSION = "2.1"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+  const APP_VERSION = "2.2"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
   useEffect(() => {
     const savedVersion = localStorage.getItem("sgs_app_version");
