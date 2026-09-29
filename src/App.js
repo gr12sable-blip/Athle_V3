@@ -79,7 +79,7 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
-const VAPID_KEY = "TA_VAPID_KEY_ICI"; // ← remplace par ta clé VAPID Firebase
+const VAPID_KEY = " BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -116,7 +116,7 @@ export default function App() {
     text: "",
   });
 
-  const APP_VERSION = "2.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+  const APP_VERSION = "2.1"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
   useEffect(() => {
     const savedVersion = localStorage.getItem("sgs_app_version");
