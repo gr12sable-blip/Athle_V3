@@ -10,7 +10,7 @@ import {
   deleteDoc,
   deleteField,
 } from "firebase/firestore";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import {
   Trash2,
   LogOut,
@@ -79,7 +79,7 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
-const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
+const VAPID_KEY = "TA_VAPID_KEY_ICI"; // ← remplace par ta clé VAPID Firebase
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -201,6 +201,16 @@ export default function App() {
               });
             }
           }).catch((err) => console.log("Erreur token FCM:", err));
+
+          // Notif quand l'app est au premier plan
+          onMessage(messaging, (payload) => {
+            if (Notification.permission === "granted") {
+              new Notification(payload.notification.title, {
+                body: payload.notification.body,
+                icon: '/icon-192.png'
+              });
+            }
+          });
         } catch (err) {
           console.log("Messaging non disponible:", err);
         }
@@ -566,7 +576,7 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://athle-v3.vercel.app/"; // ← remplace par ton URL
+  const APP_URL = "https://TON-APP.web.app"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
     const presentNames = attendants.map((a) => a.name).join(", ") || "\u2014";
