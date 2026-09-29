@@ -116,6 +116,17 @@ export default function App() {
     text: "",
   });
 
+  const APP_VERSION = "2.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+
+  useEffect(() => {
+    const savedVersion = localStorage.getItem("sgs_app_version");
+    if (savedVersion !== APP_VERSION) {
+      localStorage.removeItem("sgs_user_profile");
+      localStorage.setItem("sgs_app_version", APP_VERSION);
+      setCurrentUserProfile(null);
+    }
+  }, []);
+
   useEffect(() => {
     signInAnonymously(auth).catch((err) => console.error("Erreur Auth:", err));
     const unsubAuth = onAuthStateChanged(auth, (u) => setUser(u));
