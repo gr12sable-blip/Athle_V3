@@ -578,7 +578,7 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://TON-APP.web.app"; // ← remplace par ton URL
+  const APP_URL = "https://athle-v3.vercel.app"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
     const presentNames = attendants.map((a) => a.name).join(", ") || "\u2014";
