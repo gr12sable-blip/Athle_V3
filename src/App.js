@@ -79,7 +79,7 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
-const VAPID_KEY = " BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
+const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
