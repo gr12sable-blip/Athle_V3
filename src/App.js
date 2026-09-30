@@ -79,7 +79,7 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
-const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
+const VAPID_KEY = " BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -116,7 +116,15 @@ export default function App() {
     text: "",
   });
 
-  const APP_VERSION = "2.2"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+  // ==========================================
+  // BANNIÈRE D'INSTALLATION PWA
+  // ==========================================
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+
+  const APP_VERSION = "2.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
   useEffect(() => {
     const savedVersion = localStorage.getItem("sgs_app_version");
@@ -132,6 +140,31 @@ export default function App() {
     const unsubAuth = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubAuth();
   }, []);
+
+  // ==========================================
+  // CAPTURE ÉVÉNEMENT INSTALLATION (Android)
+  // ==========================================
+  useEffect(() => {
+    if (isInStandaloneMode) return;
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    // iOS : affiche la bannière manuelle
+    if (isIOS && !isInStandaloneMode) setShowInstallBanner(true);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === "accepted") setShowInstallBanner(false);
+      setInstallPrompt(null);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !currentUserProfile && view !== "admin" && athletes.length > 0) {
@@ -360,6 +393,28 @@ export default function App() {
         )}
       </header>
 
+      {/* BANNIÈRE INSTALLATION PWA */}
+      {showInstallBanner && !isInStandaloneMode && (
+        <div className="bg-slate-900 border-t border-slate-800 px-4 py-3 flex items-center gap-3 shadow-lg">
+          <div className="bg-red-600 p-2 rounded-lg text-white font-black italic text-xs shrink-0">SGS</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-[11px] font-black uppercase">Installer SGS Athlé</p>
+            <p className="text-slate-400 text-[9px]">Recevez les notifications de séances</p>
+          </div>
+          {isIOS ? (
+            <div className="flex flex-col items-end gap-1">
+              <p className="text-slate-300 text-[9px] text-right leading-tight">Appuyez sur <span className="text-white font-bold">⬆ Partager</span><br/>puis <span className="text-white font-bold">"Sur l'écran d'accueil"</span></p>
+              <button onClick={() => setShowInstallBanner(false)} className="text-slate-500 text-[9px] uppercase font-black">Fermer</button>
+            </div>
+          ) : (
+            <div className="flex gap-2 shrink-0">
+              <button onClick={handleInstall} className="bg-red-600 text-white text-[9px] font-black uppercase px-3 py-2 rounded-lg">Installer</button>
+              <button onClick={() => setShowInstallBanner(false)} className="text-slate-500 text-[9px] uppercase font-black">Plus tard</button>
+            </div>
+          )}
+        </div>
+      )}
+
       <main className="max-w-xl mx-auto p-4 pt-6">
         {view === "planning" && (
           <div className="space-y-8">
@@ -578,12 +633,13 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://athle-v3.vercel.app"; // ← remplace par ton URL
+  const APP_URL = "https://https://athle-v3.vercel.app"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
-    const presentNames = attendants.map((a) => a.name).join(", ") || "\u2014";
-    const absentNames  = absentees.map((a) => a.name).join(", ")  || "\u2014";
-    const noReplyNames = noReply.map((a) => a.name).join(", ")    || "\u2014";
+    const presentNames  = attendants.map((a) => a.name).join(", ") || "\u2014";
+    const absentNames   = absentees.map((a) => a.name).join(", ")  || "\u2014";
+    const noReplyNames  = noReply.map((a) => a.name).join(", ")    || "\u2014";
+    const dejaFaitNames = dejaFait.map((a) => a.name).join(", ")   || "\u2014";
 
     const e = {
       run:      "\u{1F3C3}",
@@ -593,15 +649,18 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
       check:    "\u{2705}",
       cross:    "\u{274C}",
       question: "\u{2753}",
+      double:   "\u{2714}\u{FE0F}",
       point:    "\u{1F449}",
     };
+
+    const dejaFaitLine = dejaFait.length > 0 ? `\n${e.double} D\u00E9j\u00E0 fait en solo (${dejaFait.length}) : ${dejaFaitNames}` : "";
 
     const text =
 `${e.run} *SGS ATHL\u00C9 \u2014 ${s.type} ${formatDate(s.date)}*
 ${e.clock} ${s.time} | ${e.pin} ${s.location}
 ${s.description ? `${e.muscle} ${s.description}\n` : ""}
 ${e.check} Pr\u00E9sents (${attendants.length}) : ${presentNames}
-${e.cross} Absents (${absentees.length}) : ${absentNames}
+${e.cross} Absents (${absentees.length}) : ${absentNames}${dejaFaitLine}
 ${e.question} Sans r\u00E9ponse (${noReply.length}) : ${noReplyNames}
 
 ${e.point} R\u00E9pondez ici : ${APP_URL}`;
