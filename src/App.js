@@ -130,6 +130,7 @@ export default function App() {
     const savedVersion = localStorage.getItem("sgs_app_version");
     if (savedVersion !== APP_VERSION) {
       localStorage.removeItem("sgs_user_profile");
+      localStorage.removeItem("sgs_notif_granted"); // ← efface le flag notif
       localStorage.setItem("sgs_app_version", APP_VERSION);
       setCurrentUserProfile(null);
     }
@@ -234,6 +235,7 @@ export default function App() {
 
     Notification.requestPermission().then((permission) => {
       if (permission === "granted") {
+        localStorage.setItem("sgs_notif_granted", "true");
         try {
           const messaging = getMessaging(app);
           getToken(messaging, { vapidKey: VAPID_KEY }).then((token) => {
