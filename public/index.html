@@ -1,13 +1,252 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>SGS Athlé</title>
-  <link rel="apple-touch-icon" href="/icon-192.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>SGS Athlé</title>
+  <meta name="theme-color" content="#dc2626" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    .logo {
+      background: #dc2626;
+      color: white;
+      font-weight: 900;
+      font-style: italic;
+      font-size: 2rem;
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 32px rgba(220,38,38,0.4);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Carte principale */
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+
+    /* Bouton principal */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 0.75rem;
+    }
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      padding: 0.875rem;
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Instructions iOS */
+    .ios-steps {
+      display: none;
+      text-align: left;
+    }
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #1e293b;
+    }
+    .ios-step:last-child { border-bottom: none; }
+    .step-num {
+      background: #dc2626;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 900;
+      shrink: 0;
+      flex-shrink: 0;
+    }
+    .step-text {
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .step-text strong { color: white; }
+
+    .arrow {
+      display: inline-block;
+      font-size: 1.2rem;
+      vertical-align: middle;
+    }
+
+    /* Déjà installée */
+    .already-installed {
+      display: none;
+    }
+    .check-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">SGS</div>
+  <h1>SGS Athlé</h1>
+  <p class="subtitle">Planning & présences du club</p>
+
+  <!-- État : déjà installée -->
+  <div class="card already-installed" id="state-installed">
+    <div class="check-icon">✅</div>
+    <p style="font-weight:700; margin-bottom:1rem;">L'app est déjà installée !</p>
+    <a href="https://athle-v3.vercel.app" class="btn-primary">Ouvrir SGS Athlé</a>
+  </div>
+
+  <!-- État : Android -->
+  <div class="card" id="state-android" style="display:none;">
+    <p class="card-title">Installer l'application</p>
+    <button class="btn-primary" id="btn-install" onclick="triggerInstall()">
+      📲 Installer sur mon téléphone
+    </button>
+    <a href="https://athle-v3.vercel.app" class="btn-secondary">Continuer sans installer</a>
+  </div>
+
+  <!-- État : iOS -->
+  <div class="card" id="state-ios" style="display:none;">
+    <p class="card-title">Installer sur iPhone</p>
+    <div class="ios-steps" id="ios-steps" style="display:block;">
+      <div class="ios-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Appuyez sur <strong>⬆ Partager</strong> en bas de Safari</div>
+      </div>
+      <div class="ios-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong></div>
+      </div>
+      <div class="ios-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Appuyez sur <strong>"Ajouter"</strong> en haut à droite</div>
+      </div>
+    </div>
+    <a href="https://athle-v3.vercel.app" class="btn-secondary" style="margin-top:1rem;">Ouvrir sans installer</a>
+  </div>
+
+  <!-- État : Desktop ou autre -->
+  <div class="card" id="state-default" style="display:none;">
+    <p class="card-title">Accéder à l'application</p>
+    <a href="https://athle-v3.vercel.app" class="btn-primary">Ouvrir SGS Athlé</a>
+    <p style="font-size:0.7rem; color:#64748b; margin-top:1rem;">Pour installer l'app, ouvrez ce lien depuis votre téléphone</p>
+  </div>
+
+  <script>
+    let deferredPrompt = null;
+
+    // Détection
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroid = /android/i.test(navigator.userAgent);
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isMobile = isIOS || isAndroid;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    function triggerInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            document.getElementById('state-android').style.display = 'none';
+            document.getElementById('state-installed').style.display = 'block';
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        // Pas de prompt disponible → ouvre directement l'app
+        window.location.href = 'https://athle-v3.vercel.app';
+      }
+    }
+
+    // Affiche le bon état
+    function showState() {
+      if (isInstalled) {
+        document.getElementById('state-installed').style.display = 'block';
+      } else if (isIOS) {
+        document.getElementById('state-ios').style.display = 'block';
+      } else if (isAndroid) {
+        document.getElementById('state-android').style.display = 'block';
+      } else {
+        document.getElementById('state-default').style.display = 'block';
+      }
+    }
+
+    // Petit délai pour laisser beforeinstallprompt se déclencher
+    setTimeout(showState, 300);
+  </script>
+
+</body>
 </html>
