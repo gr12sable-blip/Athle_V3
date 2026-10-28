@@ -122,15 +122,14 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
 
-  const APP_VERSION = "2.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+  const APP_VERSION = "3.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
   useEffect(() => {
     const savedVersion = localStorage.getItem("sgs_app_version");
     if (savedVersion !== APP_VERSION) {
       localStorage.removeItem("sgs_user_profile");
-      localStorage.removeItem("sgs_notif_granted"); // ← efface le flag notif
       localStorage.setItem("sgs_app_version", APP_VERSION);
       setCurrentUserProfile(null);
     }
@@ -235,7 +234,6 @@ export default function App() {
 
     Notification.requestPermission().then((permission) => {
       if (permission === "granted") {
-        localStorage.setItem("sgs_notif_granted", "true");
         try {
           const messaging = getMessaging(app);
           getToken(messaging, { vapidKey: VAPID_KEY }).then((token) => {
@@ -578,7 +576,7 @@ export default function App() {
             <h3 className="font-black uppercase text-red-600 text-xs text-center mb-4">Modifier la séance</h3>
             <input type="date" value={editingSession.date} onChange={(e) => setEditingSession({ ...editingSession, date: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" />
             <input type="text" value={editingSession.type} onChange={(e) => setEditingSession({ ...editingSession, type: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" placeholder="Type (Course, Événement...)" />
-            <textarea value={editingSession.description} onChange={(e) => setEditingSession({ ...editingSession, description: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl text-sm h-24 italic" placeholder="Description" />
+            <textarea value={editingSession.description ? editingSession.description.replace(/\|/g, "\n") : ""} onChange={(e) => setEditingSession({ ...editingSession, description: e.target.value.replace(/\n/g, "|") })} className="w-full p-3 bg-slate-50 rounded-xl text-sm h-32 italic" placeholder={"Échauffement 30min\nCorps de séance\nRécupération"} />
             <div className="flex gap-2 pt-2">
               <button onClick={updateSession} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-black uppercase text-[10px]">Enregistrer</button>
               <button onClick={() => setEditingSession(null)} className="flex-1 bg-slate-100 py-3 rounded-xl font-black uppercase text-[10px] text-slate-500">Annuler</button>
@@ -635,7 +633,7 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://athle-v3.vercel.app"; // ← remplace par ton URL
+  const APP_URL = "https://athle-v3.vercel.app/"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
     const presentNames  = attendants.map((a) => a.name).join(", ") || "\u2014";
@@ -695,7 +693,7 @@ ${e.point} R\u00E9pondez ici : ${APP_URL}`;
       </div>
 
       <p className="text-slate-400 text-[10px] font-black uppercase mb-4 tracking-tighter italic">📍 {s.location}</p>
-      {!isCancelled && <div className="p-4 rounded-2xl bg-white/50 border border-white shadow-inner text-sm font-medium mb-5 italic text-slate-700">{s.description || "Pas de détails."}</div>}
+      {!isCancelled && <div className="p-4 rounded-2xl bg-white/50 border border-white shadow-inner text-sm font-medium mb-5 italic text-slate-700">{s.description ? s.description.split("|").map((line, i) => (<span key={i} style={{display:"block"}}>{line}</span>)) : "Pas de détails."}</div>}
 
       <div className="space-y-4 border-t border-slate-100 pt-4">
           <div className="flex items-center justify-between">
