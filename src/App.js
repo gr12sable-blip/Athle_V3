@@ -393,6 +393,28 @@ export default function App() {
         )}
       </header>
 
+      {/* BANDEAU VERSION WEB → OUVRIR DANS L'APP */}
+      {!isInStandaloneMode && (
+        <div className="bg-red-600 px-4 py-2 flex items-center justify-between gap-3">
+          <p className="text-white text-[10px] font-black uppercase tracking-wide">📲 Installez l'app pour les notifications</p>
+          <button
+            onClick={() => {
+              // Tente d'ouvrir la PWA, sinon redirige vers install.html
+              const isAndroid = /android/i.test(navigator.userAgent);
+              if (isAndroid) {
+                window.location.href = "intent://athle-v3.vercel.app/#Intent;scheme=https;package=com.android.chrome;end";
+                setTimeout(() => { window.location.href = "/install.html"; }, 1500);
+              } else {
+                window.location.href = "/install.html";
+              }
+            }}
+            className="bg-white text-red-600 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0"
+          >
+            Installer
+          </button>
+        </div>
+      )}
+
       {/* BANNIÈRE INSTALLATION PWA */}
       {showInstallBanner && !isInStandaloneMode && (
         <div className="bg-slate-900 border-t border-slate-800 px-4 py-3 flex items-center gap-3 shadow-lg">
@@ -633,7 +655,7 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://athle-v3.vercel.app/"; // ← remplace par ton URL
+  const APP_URL = "https://athle-v3.vercel.app"; // ← remplace par ton URL
 
   const shareOnWhatsApp = () => {
     const presentNames  = attendants.map((a) => a.name).join(", ") || "\u2014";
