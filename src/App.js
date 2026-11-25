@@ -79,7 +79,8 @@ const firebaseConfig = {
 };
 
 const CLUB_ID = "dream-team-athle-official-v1";
-const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU"; // ← remplace par ta clé VAPID Firebase
+const VAPID_KEY = "BBRwUeAyS7QpxXYrJEdgdT5dDuE6klueuTdr45nHokeKjQ93UwOvJt1ZdU6scbCK-sDM1AwG9CGgNmVus2FsqvU";
+const APP_URL = "https://athle-v3.vercel.app";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -109,6 +110,8 @@ export default function App() {
   const [editingSession, setEditingSession] = useState(null);
   const [editingAthlete, setEditingAthlete] = useState(null);
   const [editingPR, setEditingPR] = useState(null);
+  const emptyNewSession = { date: "", time: "19:00", type: "", location: "Stade", description: "" };
+  const [newSession, setNewSession] = useState(emptyNewSession);
 
   const [editingStatus, setEditingStatus] = useState(false);
   const [statusInput, setStatusInput] = useState({
@@ -122,7 +125,9 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+  const isInStandaloneMode =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
 
   const APP_VERSION = "4.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
@@ -289,9 +294,27 @@ export default function App() {
     alert("Séances publiées !");
   };
 
+  const createSession = async () => {
+    if (!newSession.date) {
+      alert("Choisis une date pour la séance.");
+      return;
+    }
+    const id = `sess_${newSession.date.replace(/[^0-9]/g, "")}_${Date.now()}`;
+    await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "sessions", id), {
+      date: newSession.date,
+      time: newSession.time || "19:00",
+      type: newSession.type.trim() || "Entraînement",
+      location: newSession.location.trim() || "Stade",
+      description: newSession.description,
+      isCancelled: false,
+    });
+    setNewSession(emptyNewSession);
+    alert("Séance créée !");
+  };
+
   const updateSession = async () => {
     if (!editingSession) return;
-    await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "sessions", editingSession.id), editingSession, { merge: true });
+    await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "sessions", editingSession.id), { ...editingSession, time: editingSession.time || "19:00" }, { merge: true });
     setEditingSession(null);
   };
 
@@ -315,6 +338,12 @@ export default function App() {
     if (!newAthleteName.trim()) return;
     await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "members", `ath_${Date.now()}`), { name: newAthleteName });
     setNewAthleteName("");
+  };
+
+  const renameAthlete = async () => {
+    if (!editingAthlete || !editingAthlete.name.trim()) return;
+    await setDoc(doc(db, "artifacts", CLUB_ID, "public", "data", "members", editingAthlete.id), { name: editingAthlete.name.trim() }, { merge: true });
+    setEditingAthlete(null);
   };
 
   const deleteAthlete = async (id) => {
@@ -504,8 +533,21 @@ export default function App() {
             ) : (
               <div className="space-y-6 pb-20">
                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-red-100">
+                  <h3 className="font-black text-[10px] uppercase mb-4 text-red-600">Nouvelle séance</h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="date" value={newSession.date} onChange={(e) => setNewSession({ ...newSession, date: e.target.value })} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" />
+                      <input type="time" value={newSession.time} onChange={(e) => setNewSession({ ...newSession, time: e.target.value })} className="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" />
+                    </div>
+                    <input type="text" value={newSession.type} onChange={(e) => setNewSession({ ...newSession, type: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" placeholder="Type (VMA, Seuil, Course, Événement...)" />
+                    <input type="text" value={newSession.location} onChange={(e) => setNewSession({ ...newSession, location: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none" placeholder="Lieu" />
+                    <textarea value={newSession.description.replace(/\|/g, "\n")} onChange={(e) => setNewSession({ ...newSession, description: e.target.value.replace(/\n/g, "|") })} className="w-full p-3 bg-slate-50 rounded-xl text-sm h-28 italic outline-none" placeholder={"Échauffement 30min\nCorps de séance\nRécupération"} />
+                    <button onClick={createSession} className="w-full py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px]">Créer la séance</button>
+                  </div>
+                </div>
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-red-100">
                   <h3 className="font-black text-[10px] uppercase mb-4 text-red-600">Importer Séances (CSV)</h3>
-                  <textarea value={csvInput} onChange={(e) => setCsvInput(e.target.value)} className="w-full h-24 p-4 bg-slate-50 rounded-xl text-[10px] mb-4 outline-none font-mono" placeholder="2026-02-12;18:30;Seuil;Stade;Détails..." />
+                  <textarea value={csvInput} onChange={(e) => setCsvInput(e.target.value)} className="w-full h-24 p-4 bg-slate-50 rounded-xl text-[10px] mb-4 outline-none font-mono" placeholder="2026-02-12;19:00;Seuil;Stade;Détails..." />
                   <button onClick={handleImport} className="w-full py-4 bg-red-600 text-white rounded-xl font-black uppercase text-[10px]">Publier le planning</button>
                 </div>
                 <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-red-100">
@@ -513,6 +555,25 @@ export default function App() {
                     <div className="flex gap-2 mb-4">
                         <input value={newAthleteName} onChange={(e) => setNewAthleteName(e.target.value)} className="flex-grow p-3 bg-slate-50 rounded-xl text-sm font-bold border-0 outline-none" placeholder="Prénom Nom" />
                         <button onClick={addAthlete} className="bg-red-600 text-white p-3 rounded-xl"><Plus size={20} /></button>
+                    </div>
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {athletes.filter((a) => a.name).sort((a, b) => a.name.localeCompare(b.name)).map((a) => (
+                        <div key={a.id} className="flex items-center gap-2 bg-slate-50 rounded-xl p-2">
+                          {editingAthlete?.id === a.id ? (
+                            <>
+                              <input value={editingAthlete.name} onChange={(e) => setEditingAthlete({ ...editingAthlete, name: e.target.value })} className="flex-grow p-2 bg-white rounded-lg text-xs font-bold border-0 outline-none" />
+                              <button onClick={renameAthlete} className="p-2 bg-green-600 text-white rounded-lg"><Check size={14} /></button>
+                              <button onClick={() => setEditingAthlete(null)} className="p-2 bg-slate-200 text-slate-500 rounded-lg"><X size={14} /></button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="flex-grow text-xs font-black uppercase italic text-slate-700 pl-2">{a.name}</span>
+                              <button onClick={() => setEditingAthlete({ id: a.id, name: a.name })} className="p-2 bg-white text-blue-600 rounded-lg shadow-sm"><Edit3 size={12} /></button>
+                              <button onClick={() => deleteAthlete(a.id)} className="p-2 bg-white text-red-600 rounded-lg shadow-sm"><Trash2 size={12} /></button>
+                            </>
+                          )}
+                        </div>
+                      ))}
                     </div>
                 </div>
                 <button onClick={() => setIsAdminAuthenticated(false)} className="w-full text-slate-300 font-black text-[10px] uppercase py-4 tracking-widest">Déconnexion</button>
@@ -575,6 +636,8 @@ export default function App() {
           <div className="bg-white w-full max-w-md p-6 rounded-[2rem] space-y-4 shadow-2xl">
             <h3 className="font-black uppercase text-red-600 text-xs text-center mb-4">Modifier la séance</h3>
             <input type="date" value={editingSession.date} onChange={(e) => setEditingSession({ ...editingSession, date: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" />
+            <input type="time" value={editingSession.time || "19:00"} onChange={(e) => setEditingSession({ ...editingSession, time: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" />
+            <input type="text" value={editingSession.location || ""} onChange={(e) => setEditingSession({ ...editingSession, location: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" placeholder="Lieu (Stade, Fleury, Piste...)" />
             <input type="text" value={editingSession.type} onChange={(e) => setEditingSession({ ...editingSession, type: e.target.value })} className="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm" placeholder="Type (Course, Événement...)" />
             <textarea value={editingSession.description ? editingSession.description.replace(/\|/g, "\n") : ""} onChange={(e) => setEditingSession({ ...editingSession, description: e.target.value.replace(/\n/g, "|") })} className="w-full p-3 bg-slate-50 rounded-xl text-sm h-32 italic" placeholder={"Échauffement 30min\nCorps de séance\nRécupération"} />
             <div className="flex gap-2 pt-2">
@@ -633,8 +696,6 @@ function SessionCard({ s, athletes, attendanceData, commentsData, currentUserPro
   // ==========================================
   // GÉNÉRATION MESSAGE WHATSAPP
   // ==========================================
-  const APP_URL = "https://athle-v3.vercel.app"; // ← remplace par ton URL
-
   const shareOnWhatsApp = () => {
     const presentNames  = attendants.map((a) => a.name).join(", ") || "\u2014";
     const absentNames   = absentees.map((a) => a.name).join(", ")  || "\u2014";
