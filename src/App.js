@@ -124,7 +124,7 @@ export default function App() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
 
-  const APP_VERSION = "3.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
+  const APP_VERSION = "4.0"; // ← change ce numéro pour forcer un re-login de tous les athlètes
 
   useEffect(() => {
     const savedVersion = localStorage.getItem("sgs_app_version");
